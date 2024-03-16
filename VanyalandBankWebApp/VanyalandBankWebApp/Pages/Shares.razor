@@ -1,0 +1,62 @@
+﻿@page "/shares"
+@using Eloe.RemoteEfExecute
+@using VanyalandBankWebApp.Managers
+<h3>Aksjer</h3>
+
+@if (_companyShares == null)
+{
+    <span>Laster...</span>
+    return;
+}
+
+<table class="table table-hover">
+    <thead>
+        <td>Eier</td>
+        <td>Selskap</td>
+        <td>Antall aksjer</td>
+        <td>Pris per aksje</td>
+    </thead>
+    @foreach (var share in _companyShares)
+    {
+        <tr>
+            @if (share.PersionId != null && share.PersionId != 0)
+            {
+                var person = _persons.FirstOrDefault(x => x.Id == share.PersionId);
+                <td scope="col" class="col-3">@person.FirstName @person.LastName</td>
+            }
+            else if (share.OwnerCompanyRegisterId != null && share.OwnerCompanyRegisterId != 0)
+            {
+                var company = _companyRegisters.FirstOrDefault(x => x.Id == share.CompanyRegisterId);
+                <td scope="col" class="col-3">@company.CompanyName</td>
+            }
+            else
+            {
+                <td scope="col" class="col-3">unkjent</td>
+            }
+            <td scope="col" class="col-2">@_companyRegisters.First(x => x.Id == share.CompanyRegisterId).CompanyName</td>
+            <td scope="col" class="col-1">@share.NumberShares</td>
+            <td scope="col" class="col-2">@share.PricePerShare</td>
+        </tr>
+        
+    }
+</table>
+
+@code {
+    private EfDbContext _efDbContext;
+    private IList<VanyalandBank.Models.CompanyShare>? _companyShares;
+    private IList<VanyalandBank.Models.Person>? _persons;
+    private IList<VanyalandBank.Models.CompanyRegister>? _companyRegisters;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var executer = new RemoteDbSetExecuter("http://localhost:5262");
+        _efDbContext = new EfDbContext(executer);
+
+        _companyShares = await _efDbContext.CompanyShares.ToListAsync();
+        _persons = await _efDbContext.Persons.ToListAsync();
+        _companyRegisters = await _efDbContext.CompanyRegister.ToListAsync();
+
+        base.OnInitialized();
+    }
+
+}

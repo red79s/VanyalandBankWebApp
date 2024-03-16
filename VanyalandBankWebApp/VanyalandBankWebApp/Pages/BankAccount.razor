@@ -1,0 +1,67 @@
+﻿@page "/bankAccount"
+@using Eloe.RemoteEfExecute
+@using VanyalandBankWebApp.Managers
+<h3>BankAccount</h3>
+
+@if (_bankAccounts == null)
+{
+    <span>Laster...</span>
+    return;
+}
+
+<RadzenButton Text="Hello world" Click="@ButtonClicked"></RadzenButton>
+<RadzenText Text="@inputText"></RadzenText>
+<table class="table table-hover">
+    <thead>
+        <td>Eier</td>
+        <td>Konto navn</td>
+        <td>Beløp</td>
+    </thead>
+    @foreach (var bankAccount in _bankAccounts)
+    {
+        <tr>
+            @if (bankAccount.PersonId != null && bankAccount.PersonId != 0)
+            {
+                var person = _persons.FirstOrDefault(x => x.Id == bankAccount.PersonId);
+                <td scope="col" class="col-3">@person.FirstName @person.LastName</td>
+            }
+            else if (bankAccount.CompanyRegisterId != null && bankAccount.CompanyRegisterId != 0)
+            {
+                var company = _companyRegisters.FirstOrDefault(x => x.Id == bankAccount.CompanyRegisterId);
+                <td scope="col" class="col-3">@company.CompanyName</td>
+            }
+            else
+            {
+                <td scope="col" class="col-3">unkjent</td>
+            }
+            <td scope="col" class="col-3">@bankAccount.AccountName</td>
+            <td scope="col" class="col-1">@bankAccount.Amount</td>
+        </tr>
+        
+    }
+</table>
+
+@code {
+    private EfDbContext _efDbContext;
+    private IList<VanyalandBank.Models.BankAccount>? _bankAccounts;
+    private IList<VanyalandBank.Models.Person>? _persons;
+    private IList<VanyalandBank.Models.CompanyRegister>? _companyRegisters;
+    private string inputText = "some text";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var executer = new RemoteDbSetExecuter("http://localhost:5262");
+        _efDbContext = new EfDbContext(executer);
+
+        _bankAccounts = await _efDbContext.BankAccounts.ToListAsync();
+        _persons = await _efDbContext.Persons.ToListAsync();
+        _companyRegisters = await _efDbContext.CompanyRegister.ToListAsync();
+
+        base.OnInitialized();
+    }
+
+    private void ButtonClicked()
+    {
+        inputText += " abc";
+    }
+}
